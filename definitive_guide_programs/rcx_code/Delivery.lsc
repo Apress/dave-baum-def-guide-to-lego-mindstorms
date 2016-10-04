@@ -1,0 +1,151 @@
+program test {
+	
+	#include <RCX2.h>
+	#include <RCX2MLT.h>
+	#include <RCX2Sounds.h>
+	#include <RCX2Def.h>
+	var lineValue = 0
+	var stopValue = 0
+	var sweepTime = 0
+	var sweepDir = 0
+	var stopMode = 0
+	var count = 0
+	sensor touch3 on 3
+	touch3 is switch as boolean
+	event tPress_touch3EventPress when touch3.pressed
+	
+	
+	sensor light2 on 2
+	light2 is light as percent
+	event lDark_light2EventLow when light2 < (lineValue / 10)
+	
+	event lBrite_light2EventHigh when light2 > (lineValue / 10)
+	
+	event greater_messageEventHigh when message > 0
+	
+	event greater_countEventHigh when count > 0
+	
+	event timer1_timer1Event when timer1 > 20
+	
+	macro LB3_SETUP {
+		lineValue = (light2*10)
+		stopValue = lineValue
+		lineValue += 30
+		stopValue -= 30
+		sweepDir = 10
+	}
+	macro DEL_ORDER {
+		count = 0
+		wait until greater_countEventHigh
+		wait until timer1_timer1Event
+	}
+	macro LB3_FOLLOW {
+		on [ A C  ] 
+		while light2 > (stopValue / 10) {
+			if light2 > (lineValue / 10){
+				LB3_FIND
+			}
+			else
+			{
+			} 
+		}
+		off [ A C  ] 
+	}
+	macro DEL_PICKUP {
+		clear message
+		send (count/10)
+		wait until greater_messageEventHigh
+		direction [  ] [ A C ]
+		on [ A C  ]  for 80
+		direction [ A C  ] [ ]
+	}
+	macro DB_TURN {
+		on [ A C  ] 
+		direction [  ] [ A ]
+		wait until lBrite_light2EventHigh
+		wait until lDark_light2EventLow
+		direction [ A  ] [ ]
+		off [ A C  ] 
+	}
+	macro DB_DUMP {
+		direction [ B  ] [ ]
+		on [ B  ] 
+		wait 70
+		direction [  ] [ B ]
+		wait 100
+		off [ B  ] 
+	}
+	macro LB3_FIND {
+		power [ A C  ] 4
+		if sweepDir > 0{
+			direction [  ] [ A ]
+		}
+		else
+		{
+			direction [  ] [ C ]
+		} 
+		LB3_SCAN
+		direction [ A C  ] [ ]
+		power [ A C  ] 8
+	}
+	macro LB3_SCAN {
+		sweepTime = 2
+		repeat {
+			wait (sweepTime*10)
+			rcx_Multiply( sweepTime,20)
+			reverse [ A C  ] 
+			rcx_Multiply( sweepDir,-10)
+		} until lDark_light2EventLow
+	}
+	
+	main {
+		ext InterfaceType "kFreestyle"
+		rcx_ClearTimers
+		bbs_GlobalReset([A B C])
+		trigger lBrite_light2EventHigh
+		trigger lDark_light2EventLow
+		trigger greater_messageEventHigh
+		trigger greater_countEventHigh
+		trigger timer1_timer1Event
+		start TouchWatcher0
+		rcx_Priority( 8)
+		trigger tPress_touch3EventPress
+		LB3_SETUP
+		DEL_ORDER
+		LB3_FOLLOW
+		DEL_PICKUP
+		DB_TURN
+		LB3_FOLLOW
+		DB_DUMP
+		stop tasks
+	}
+	
+	
+	watcher TouchWatcher0 monitor tPress_touch3EventPress
+	{ 
+		rcx_Priority( 3 )
+		sound 1
+		count += 10
+		clear Timer1
+	} restart on event
+	fragment ( 665,-17 ) {
+		LB3_SCAN
+	}
+	fragment ( 574,4 ) {
+		DB_DUMP
+		LB3_FIND
+		LB3_SETUP
+	}
+	fragment ( 589,300 ) {
+		LB3_FOLLOW
+	}
+	fragment ( 467,-15 ) {
+		DEL_PICKUP
+	}
+	fragment ( 585,432 ) {
+		DB_TURN
+	}
+	fragment ( 361,-14 ) {
+		DEL_ORDER
+	}
+}

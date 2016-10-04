@@ -1,0 +1,46 @@
+program test {
+	
+	#include <RCX2.h>
+	#include <RCX2MLT.h>
+	#include <RCX2Sounds.h>
+	#include <RCX2Def.h>
+	var threshold = 0
+	var count = 0
+	event greater_messageEventHigh when message > 0
+	
+	sensor touch3 on 3
+	touch3 is switch as boolean
+	event tRelease_touch3EventRelease when touch3.released
+	
+	
+	macro VM_DISPENSE {
+		on [ C  ] 
+		repeat (count/10) {
+			wait until tRelease_touch3EventRelease
+		}
+		off [ C  ] 
+	}
+	
+	main {
+		ext InterfaceType "kFreestyle"
+		rcx_ClearTimers
+		bbs_GlobalReset([A B C])
+		start IRWatcher0
+		trigger tRelease_touch3EventRelease
+		rcx_Priority( 8)
+		rcx_ClearIRMessage
+		trigger greater_messageEventHigh
+	}
+	
+	
+	watcher IRWatcher0 monitor greater_messageEventHigh
+	{
+		rcx_Priority( 6 )
+		count = (message*10)
+		VM_DISPENSE
+		clear message
+	} restart on event
+	fragment ( 419,18 ) {
+		VM_DISPENSE
+	}
+}

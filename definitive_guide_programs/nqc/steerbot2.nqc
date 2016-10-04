@@ -1,0 +1,113 @@
+// steerbot2.nqc
+//   multi-tasked steering
+
+
+// interface for steering task
+#define STEER_LEFT      -1
+#define STEER_CENTER     0
+#define STEER_RIGHT      1
+
+int steer_goal; // set this to steer
+int steer_current = -999; // check this
+
+// implementation of steering task
+#define CENTER   SENSOR_1
+#define STEER    OUT_A
+#define FULL_TURN_TIME    50
+
+task steer_task()
+{
+    SetSensor(CENTER, SENSOR_TOUCH);
+    
+    // align
+    OnFwd(STEER);
+    Wait(FULL_TURN_TIME);
+    Toggle(STEER);
+    until(CENTER==1);
+    Off(STEER);
+    
+    steer_goal = 0;
+    steer_current = 0;
+    
+    while(true)
+    {
+        int goal;
+        
+        goal = steer_goal;
+        if (goal != steer_current)
+        {
+            if (goal == STEER_LEFT)
+            {
+                // turn left
+                Fwd(STEER);
+                OnFor(STEER, FULL_TURN_TIME);
+            }
+            else if (goal == STEER_RIGHT)
+            {
+                // turn right
+                Rev(STEER);
+                OnFor(STEER, FULL_TURN_TIME);
+            }
+            else
+            {
+                Toggle(STEER);
+                On(STEER);
+                until(CENTER==1);
+                Off(STEER);
+            }
+            
+            steer_current = goal;
+        }
+    }
+}
+
+
+// main task...
+
+#define EYE    SENSOR_2
+#define DRIVE    OUT_C
+#define STRAIGHT_TIME    50
+
+#define PROX_EVENT 1
+#define PROX_THRESHOLD 52
+
+task main()
+{
+    SetSensor(EYE, SENSOR_LIGHT);
+    SetEvent(PROX_EVENT, EYE, EVENT_TYPE_HIGH);
+    SetUpperLimit(PROX_EVENT, PROX_THRESHOLD);
+
+    start steer_task;
+    until(steer_current == 0);
+
+    On(DRIVE);
+    
+    // use "far" messages
+    SetTxPower(TX_POWER_HI);
+
+    while(true)
+    {
+        monitor(EVENT_MASK(PROX_EVENT))
+        {
+            while(true)
+            {
+                SendMessage(85);
+            }
+        }
+        catch
+        {
+            Rev(DRIVE);
+            steer_goal = STEER_RIGHT;
+            repeat (3)
+            {
+                PlayTone(880, 30);
+                Wait(50);
+            }
+            
+            steer_goal = STEER_CENTER;
+            Fwd(DRIVE);
+        }
+    }
+}
+
+

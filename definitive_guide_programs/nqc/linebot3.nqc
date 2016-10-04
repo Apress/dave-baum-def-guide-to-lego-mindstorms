@@ -1,0 +1,86 @@
+// linebot3.nqc
+//    improved line following
+
+// sensor and motors
+#define EYE     SENSOR_2
+#define LEFT    OUT_A
+#define RIGHT   OUT_C
+
+#define LINE_EVENT 1
+
+// global variables
+int lineValue;
+int stopValue;
+int sweepDir = 1;
+
+
+void setup()
+{
+    SetSensor(EYE, SENSOR_LIGHT);
+
+    lineValue = EYE;
+    stopValue = lineValue - 3;
+    lineValue += 3;
+
+    SetEvent(LINE_EVENT, EYE, EVENT_TYPE_LOW);
+    LowerLimit(LINE_EVENT) = lineValue;
+}
+
+
+void find()
+{
+    SetPower(LEFT+RIGHT, 3);
+    if (sweepDir > 0)
+    {
+        Rev(LEFT);
+    }
+    else
+    {
+        Rev(RIGHT);
+    }
+    
+    int sweepTime = 20;
+
+    monitor(EVENT_MASK(LINE_EVENT))
+    {
+        while(true)
+        {
+            Wait(sweepTime);
+    
+            sweepTime *= 2;
+            sweepDir *= -1;
+            Toggle(LEFT+RIGHT);
+        }
+    }
+
+    Fwd(LEFT+RIGHT);
+    SetPower(LEFT+RIGHT, OUT_FULL);
+    
+}
+
+
+void follow()
+{
+    On(LEFT+RIGHT);
+
+    while(EYE > stopValue)
+    {
+        if (EYE > lineValue)
+        {
+            find();
+        }
+    }
+    
+    Off(LEFT+RIGHT);
+}
+
+
+
+task main()
+{
+    setup();
+    
+    follow();
+    PlaySound(SOUND_DOWN);
+}
+

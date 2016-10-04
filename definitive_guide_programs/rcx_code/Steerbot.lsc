@@ -1,0 +1,64 @@
+program test {
+	
+	#include <RCX2.h>
+	#include <RCX2MLT.h>
+	#include <RCX2Sounds.h>
+	#include <RCX2Def.h>
+	sensor light2 on 2
+	light2 is light as percent
+	event lBrite_light2EventHigh when light2 > 52
+	
+	sensor touch1 on 1
+	touch1 is switch as boolean
+	macro STEER_LEFT {
+		direction [  ] [ A ]
+		on [ A  ]  for 50
+	}
+	macro STEER_CENTER {
+		reverse [ A  ] 
+		on [ A  ] 
+		while touch1 is opened {
+		}
+		off [ A  ] 
+	}
+	macro STEER_RIGHT {
+		direction [ A  ] [ ]
+		on [ A  ]  for 50
+	}
+	
+	main {
+		ext InterfaceType "kFreestyle"
+		rcx_ClearTimers
+		bbs_GlobalReset([A B C])
+		start LightWatcher0
+		rcx_Priority( 8)
+		trigger lBrite_light2EventHigh
+		STEER_LEFT
+		STEER_CENTER
+		on [ C  ] 
+		forever {
+			send 85
+		}
+	}
+	
+	
+	watcher LightWatcher0 monitor lBrite_light2EventHigh
+	{
+		rcx_Priority( 4 )
+		direction [  ] [ C ]
+		STEER_RIGHT
+		wait 50
+		direction [ C  ] [ ]
+		STEER_LEFT
+		STEER_CENTER
+	} restart on event
+	fragment ( 416,14 ) {
+		STEER_LEFT
+	}
+	fragment ( 390,284 ) {
+		STEER_RIGHT
+	}
+	fragment ( 545,13 ) {
+		STEER_CENTER
+	}
+}

@@ -1,0 +1,108 @@
+program test {
+	
+	#include <RCX2.h>
+	#include <RCX2MLT.h>
+	#include <RCX2Sounds.h>
+	#include <RCX2Def.h>
+	var previous = 0
+	var max = 0
+	var target = 0
+	var level = 0
+	var spinTime = 0
+	sensor rotation1 on 1
+	rotation1 is rotation as angle
+	sensor light3 on 3
+	light3 is light as percent
+	macro SC2_ALIGN {
+		direction [  ] [ B ]
+		on [ B  ] 
+		previous = 9990
+		while rotation1 < (previous / 10) {
+			previous = (rotation1*10)
+			wait 10
+		}
+		off [ B  ] 
+		rcx_Calibrate(4,1)
+		clear Rotation1
+	}
+	macro SC2_SCAN {
+		max = 0
+		on [ B  ] 
+		if rotation1 < 53{
+			direction [ B  ] [ ]
+			while rotation1 < 102 {
+				SC2_CHECK
+			}
+		}
+		else
+		{
+			direction [  ] [ B ]
+			while rotation1 > 4 {
+				SC2_CHECK
+			}
+		} 
+		off [ B  ] 
+	}
+	macro SC2_STEER {
+		target -= 530
+		spinTime = target
+		spinTime = abs(spinTime)
+		if spinTime > 30{
+			SC2_SPIN
+		}
+		else
+		{
+		} 
+	}
+	macro SC2_SPIN {
+		rcx_Divide(spinTime,500)
+		if target < 0{
+			direction [  ] [ A ]
+		}
+		else
+		{
+			direction [  ] [ C ]
+		} 
+		wait (spinTime*10)
+		direction [ A C  ] [ ]
+	}
+	macro SC2_CHECK {
+		level = (light3*10)
+		if level > max{
+			target = (rotation1*10)
+			max = level
+		}
+		else
+		{
+		} 
+	}
+	
+	main {
+		ext InterfaceType "kFreestyle"
+		rcx_ClearTimers
+		bbs_GlobalReset([A B C])
+		SC2_ALIGN
+		on [ A C  ] 
+		forever {
+			SC2_SCAN
+			SC2_STEER
+		}
+	}
+	
+	
+	fragment ( 727,3 ) {
+		SC2_CHECK
+	}
+	fragment ( 356,690 ) {
+		SC2_SPIN
+	}
+	fragment ( 201,4 ) {
+		SC2_ALIGN
+	}
+	fragment ( 43,676 ) {
+		SC2_STEER
+	}
+	fragment ( 440,0 ) {
+		SC2_SCAN
+	}
+}

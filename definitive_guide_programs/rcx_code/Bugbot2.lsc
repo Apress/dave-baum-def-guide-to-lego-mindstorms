@@ -1,0 +1,56 @@
+program test {
+	
+	#include <RCX2.h>
+	#include <RCX2MLT.h>
+	#include <RCX2Sounds.h>
+	#include <RCX2Def.h>
+	sensor touch3 on 3
+	touch3 is switch as boolean
+	sensor touch1 on 1
+	touch1 is switch as boolean
+	macro BUG_LEFT {
+		if touch1 is closed {
+		}
+		else
+		{
+			off [ A  ] 
+			direction [  ] [ C ]
+			while touch1 is opened {
+			}
+			on [ A  ] 
+			direction [ C  ] [ ]
+		} 
+	}
+	macro BUG_RIGHT {
+		if touch3 is closed {
+		}
+		else
+		{
+			off [ C  ] 
+			direction [  ] [ A ]
+			while touch3 is opened {
+			}
+			on [ C  ] 
+			direction [ A  ] [ ]
+		} 
+	}
+	
+	main {
+		ext InterfaceType "kFreestyle"
+		rcx_ClearTimers
+		bbs_GlobalReset([A B C])
+		on [ A C  ] 
+		forever {
+			BUG_LEFT
+			BUG_RIGHT
+		}
+	}
+	
+	
+	fragment ( 462,-14 ) {
+		BUG_RIGHT
+	}
+	fragment ( 206,-10 ) {
+		BUG_LEFT
+	}
+}

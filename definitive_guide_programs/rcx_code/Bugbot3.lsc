@@ -1,0 +1,88 @@
+program test {
+	
+	#include <RCX2.h>
+	#include <RCX2MLT.h>
+	#include <RCX2Sounds.h>
+	#include <RCX2Def.h>
+	var bumps = 0
+	event timer1_timer1Event when timer1 > 50
+	sensor touch3 on 3
+	touch3 is switch as boolean
+	sensor touch1 on 1
+	touch1 is switch as boolean
+	macro BUG_LEFT {
+		if touch1 is closed {
+		}
+		else
+		{
+			off [ A  ] 
+			direction [  ] [ C ]
+			while touch1 is opened {
+			}
+			on [ A  ] 
+			direction [ C  ] [ ]
+			bumps += 10
+		} 
+	}
+	macro BUG_RIGHT {
+		if touch3 is closed {
+		}
+		else
+		{
+			off [ C  ] 
+			direction [  ] [ A ]
+			while touch3 is opened {
+			}
+			on [ C  ] 
+			direction [ A  ] [ ]
+			bumps += 10
+		} 
+	}
+	macro BUG_CHECK {
+		if bumps > 100{
+			sound 3
+			bumps = 0
+			direction [  ] [ A C ]
+			wait 100
+			direction [ C  ] [ ]
+			wait ( Random 30 to 60 ) * 10
+			direction [ A  ] [ ]
+		}
+		else
+		{
+		} 
+	}
+	
+	main {
+		ext InterfaceType "kFreestyle"
+		rcx_ClearTimers
+		bbs_GlobalReset([A B C])
+		start TimerWatcher0
+		rcx_Priority( 8)
+		trigger timer1_timer1Event
+		on [ A C  ] 
+		forever {
+			BUG_LEFT
+			BUG_RIGHT
+			BUG_CHECK
+		}
+	}
+	
+	
+	watcher TimerWatcher0 monitor timer1_timer1Event
+	{
+		rcx_Priority( 8)
+		tone 440 for 100
+		bumps = 0
+		clear Timer1
+	} restart on event
+	fragment ( 763,-14 ) {
+		BUG_RIGHT
+	}
+	fragment ( 492,-14 ) {
+		BUG_LEFT
+	}
+	fragment ( 234,136 ) {
+		BUG_CHECK
+	}
+}

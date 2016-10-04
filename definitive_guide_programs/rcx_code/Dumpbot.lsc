@@ -1,0 +1,109 @@
+program test {
+	
+	#include <RCX2.h>
+	#include <RCX2MLT.h>
+	#include <RCX2Sounds.h>
+	#include <RCX2Def.h>
+	var lineValue = 0
+	var stopValue = 0
+	var sweepTime = 0
+	var sweepDir = 0
+	var stopMode = 0
+	sensor light2 on 2
+	light2 is light as percent
+	event lDark_light2EventLow when light2 < (lineValue / 10)
+	
+	event lBrite_light2EventHigh when light2 > (lineValue / 10)
+	
+	macro LB3_SETUP {
+		lineValue = (light2*10)
+		stopValue = lineValue
+		lineValue += 30
+		stopValue -= 30
+		sweepDir = 10
+	}
+	macro LB3_FOLLOW {
+		on [ A C  ] 
+		while light2 > (stopValue / 10) {
+			if light2 > (lineValue / 10){
+				LB3_FIND
+			}
+			else
+			{
+			} 
+		}
+		off [ A C  ] 
+	}
+	macro DB_DUMP {
+		direction [ B  ] [ ]
+		on [ B  ] 
+		wait 70
+		direction [  ] [ B ]
+		wait 100
+		off [ B  ] 
+	}
+	macro DB_TURN {
+		on [ A C  ] 
+		direction [  ] [ A ]
+		wait until lBrite_light2EventHigh
+		wait until lDark_light2EventLow
+		direction [ A  ] [ ]
+		off [ A C  ] 
+	}
+	macro LB3_FIND {
+		power [ A C  ] 4
+		if sweepDir > 0{
+			direction [  ] [ A ]
+		}
+		else
+		{
+			direction [  ] [ C ]
+		} 
+		LB3_SCAN
+		direction [ A C  ] [ ]
+		power [ A C  ] 8
+	}
+	macro LB3_SCAN {
+		sweepTime = 2
+		repeat {
+			wait (sweepTime*10)
+			rcx_Multiply( sweepTime,20)
+			reverse [ A C  ] 
+			rcx_Multiply( sweepDir,-10)
+		} until lDark_light2EventLow
+	}
+	
+	main {
+		ext InterfaceType "kFreestyle"
+		rcx_ClearTimers
+		bbs_GlobalReset([A B C])
+		trigger lBrite_light2EventHigh
+		trigger lDark_light2EventLow
+		LB3_SETUP
+		LB3_FOLLOW
+		DB_DUMP
+		DB_TURN
+		LB3_FOLLOW
+		stop tasks
+	}
+	
+	
+	fragment ( 511,130 ) {
+		LB3_SETUP
+	}
+	fragment ( 459,-26 ) {
+		LB3_FIND
+	}
+	fragment ( 665,-17 ) {
+		LB3_SCAN
+	}
+	fragment ( 317,16 ) {
+		DB_DUMP
+	}
+	fragment ( 178,21 ) {
+		DB_TURN
+	}
+	fragment ( 493,265 ) {
+		LB3_FOLLOW
+	}
+}

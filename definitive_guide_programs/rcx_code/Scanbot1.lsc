@@ -1,0 +1,89 @@
+program test {
+	
+	#include <RCX2.h>
+	#include <RCX2MLT.h>
+	#include <RCX2Sounds.h>
+	#include <RCX2Def.h>
+	sensor rotation1 on 1
+	rotation1 is rotation as angle
+	event range_rotation1EventRange when rotation1 is 1..4
+	
+	event greater_rotation1EventHigh when rotation1 > 101
+	
+	sensor light3 on 3
+	light3 is light as percent
+	event lBrite_light3EventHigh when light3 > 50
+	
+	macro SC1_ALIGN {
+		rcx_Calibrate(4,1)
+		clear Rotation1
+		direction [  ] [ B ]
+		on [ B  ]  for 300
+		rcx_Calibrate(4,1)
+		clear Rotation1
+		direction [ B  ] [ ]
+	}
+	macro SC1_STEER {
+		forever {
+			wait until lBrite_light3EventHigh
+			off [ B  ] 
+			sound 1
+			SC1_SPIN
+			on [ B  ] 
+		}
+	}
+	macro SC1_SPIN {
+		if rotation1 < 50{
+			direction [  ] [ A ]
+			wait 50
+			direction [ A  ] [ ]
+		}
+		else
+		{
+			if rotation1 > 56{
+				direction [  ] [ C ]
+				wait 50
+				direction [ C  ] [ ]
+			}
+			else
+			{
+			} 
+		} 
+	}
+	
+	main {
+		ext InterfaceType "kFreestyle"
+		rcx_ClearTimers
+		bbs_GlobalReset([A B C])
+		trigger lBrite_light3EventHigh
+		start RotationWatcher0
+		start RotationWatcher1
+		rcx_Priority( 8)
+		trigger range_rotation1EventRange
+		trigger greater_rotation1EventHigh
+		SC1_ALIGN
+		on [ A B C  ] 
+		SC1_STEER
+	}
+	
+	
+	watcher RotationWatcher0 monitor range_rotation1EventRange
+	{
+		rcx_Priority( 5 )
+		direction [ B  ] [ ]
+	} restart on event
+	watcher RotationWatcher1 monitor greater_rotation1EventHigh
+	{
+		rcx_Priority( 5 )
+		direction [  ] [ B ]
+	} restart on event
+	fragment ( 331,212 ) {
+		SC1_STEER
+	}
+	fragment ( 508,204 ) {
+		SC1_ALIGN
+	}
+	fragment ( 105,363 ) {
+		SC1_SPIN
+	}
+}

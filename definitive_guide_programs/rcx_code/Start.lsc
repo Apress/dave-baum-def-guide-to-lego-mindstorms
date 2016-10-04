@@ -1,0 +1,21 @@
+program test {
+    #include <RCX2.h>
+    #include <RCX2MLT.h>
+    #include <RCX2Sounds.h>
+    #include <RCX2Def.h>
+    
+    sensor s1 on 1
+    s1 is switch as boolean
+    event e1 when s1.pressed
+    event e2 when s1.released
+    
+    main {
+        rcx_ClearTimers
+        bbs_GlobalReset([A B C])
+        start w1
+        on [A]
+    }
+    watcher w1 monitor e1 {
+    reverse [A]
+} restart on event
+}

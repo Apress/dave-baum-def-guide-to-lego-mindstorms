@@ -1,0 +1,62 @@
+/*
+/0LOGBOOK
+0
+
+*/
+program test {
+	
+	#include <RCX2.h>
+	#include <RCX2MLT.h>
+	#include <RCX2Sounds.h>
+	#include <RCX2Def.h>
+	sensor touch1 on 1
+	touch1 is switch as boolean
+	event tRelease_touch1EventRelease when touch1.released
+	
+	
+	sensor touch3 on 3
+	touch3 is switch as boolean
+	event tRelease_touch3EventRelease when touch3.released
+	
+	
+	
+	main {
+		ext InterfaceType "kFreestyle"
+		rcx_ClearTimers
+		bbs_GlobalReset([A B C])
+		start TouchWatcher0
+		start TouchWatcher1
+		rcx_Priority( 8)
+		trigger tRelease_touch1EventRelease
+		trigger tRelease_touch3EventRelease
+		try {
+			on [ A C  ] 
+		} retry on fail
+	}
+	
+	
+	watcher TouchWatcher0 monitor tRelease_touch1EventRelease
+	{ 
+		rcx_Priority( 3 )
+		try {
+			direction [  ] [ C ]
+			off [ A  ] 
+			while touch1 is opened {
+			}
+			direction [ C  ] [ ]
+			on [ A  ] 
+		} restart on fail
+	} restart on event
+	watcher TouchWatcher1 monitor tRelease_touch3EventRelease
+	{ 
+		rcx_Priority( 3 )
+		try {
+			direction [  ] [ A ]
+			off [ C  ] 
+			while touch3 is opened {
+			}
+			direction [ A  ] [ ]
+			on [ C  ] 
+		} restart on fail
+	} restart on event
+}

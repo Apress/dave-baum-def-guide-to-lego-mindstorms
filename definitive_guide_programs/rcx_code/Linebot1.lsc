@@ -1,0 +1,48 @@
+program test {
+	
+	#include <RCX2.h>
+	#include <RCX2MLT.h>
+	#include <RCX2Sounds.h>
+	#include <RCX2Def.h>
+	sensor light2 on 2
+	light2 is light as percent
+	event lDark_light2EventLow when light2 < 44
+	
+	event lRange_light2EventRange when light2 is 44..48
+	
+	event lBrite_light2EventHigh when light2 > 48
+	
+	
+	main {
+		ext InterfaceType "kFreestyle"
+		rcx_ClearTimers
+		bbs_GlobalReset([A B C])
+		start LightWatcher0
+		start LightWatcher1
+		start LightWatcher2
+		rcx_Priority( 8)
+		trigger lDark_light2EventLow
+		trigger lRange_light2EventRange
+		trigger lBrite_light2EventHigh
+		on [ A C  ] 
+	}
+	
+	
+	watcher LightWatcher0 monitor lDark_light2EventLow
+	{
+		rcx_Priority( 4 )
+		on [ C  ] 
+		off [ A  ] 
+	} restart on event
+	watcher LightWatcher1 monitor lRange_light2EventRange
+	{
+		rcx_Priority( 4 )
+		on [ A C  ] 
+	} restart on event
+	watcher LightWatcher2 monitor lBrite_light2EventHigh
+	{
+		rcx_Priority( 4 )
+		on [ A  ] 
+		off [ C  ] 
+	} restart on event
+}

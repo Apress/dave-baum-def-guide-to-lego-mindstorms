@@ -1,0 +1,60 @@
+// linebot2.nqc
+//    automatic thresholds
+
+// sensor and motors
+#define EYE     SENSOR_2
+#define LEFT    OUT_A
+#define RIGHT   OUT_C
+
+
+// use variables for thresholds
+int tooDark;
+int tooBright;
+
+
+void setup()
+{
+    // remember bright value
+    tooBright = EYE;
+    PlaySound(SOUND_UP);
+    
+    // wait 3 seconds
+    Wait(300);
+    
+    // get dark value
+    tooDark = EYE;
+    
+    // move values in
+    int delta = (tooBright - tooDark) / 3;
+    tooDark += delta;
+    tooBright -= delta;
+}
+
+
+task main()
+{
+    SetSensor(EYE, SENSOR_LIGHT);
+    
+    setup();
+
+    On(LEFT+RIGHT);
+
+    while(true)
+    {
+        if (EYE <= tooDark)
+        {
+            Off(LEFT);
+            On(RIGHT);
+        }
+        else if (EYE >= tooBright)
+        {
+            Off(RIGHT);
+            On(LEFT);
+        }
+        else
+        {
+            On(LEFT+RIGHT);
+        }
+    }
+}
+

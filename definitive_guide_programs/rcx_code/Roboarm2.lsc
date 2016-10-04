@@ -1,0 +1,65 @@
+program test {
+	
+	#include <RCX2.h>
+	#include <RCX2MLT.h>
+	#include <RCX2Sounds.h>
+	#include <RCX2Def.h>
+	sensor touch1 on 1
+	touch1 is switch as boolean
+	sensor touch3 on 3
+	touch3 is switch as boolean
+	sensor light2 on 2
+	light2 is light as percent
+	macro DETECT {
+		on [ C  ] 
+		while light2 < 43 {
+		}
+		off [ C  ] 
+	}
+	macro ARM_GRAB {
+		direction [ B  ] [ ]
+		on [ B  ]  for 100
+	}
+	macro ARM_UP {
+		direction [ A  ] [ ]
+		on [ A  ]  for 200
+	}
+	macro ARM_HOME {
+		on [ C  ] 
+		while touch3 is closed {
+		}
+		off [ C  ] 
+	}
+	macro ARM_RELEASE {
+		direction [  ] [ B ]
+		on [ B  ]  for 60
+	}
+	macro ARM_DOWN {
+		direction [  ] [ A ]
+		on [ A  ] 
+		while touch1 is closed {
+		}
+		off [ A  ] 
+	}
+	
+	main {
+		ext InterfaceType "kFreestyle"
+		rcx_ClearTimers
+		bbs_GlobalReset([A B C])
+		repeat 4 {
+			DETECT
+			ARM_GRAB
+			ARM_UP
+			ARM_HOME
+			ARM_RELEASE
+			on [ C  ]  for 50
+			ARM_DOWN
+		}
+		sound 6
+	}
+	
+	
+	fragment ( 177,20 ) {
+		DETECT
+	}
+}

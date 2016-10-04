@@ -1,0 +1,75 @@
+program test {
+	
+	#include <RCX2.h>
+	#include <RCX2MLT.h>
+	#include <RCX2Sounds.h>
+	#include <RCX2Def.h>
+	var threshold = 0
+	var count = 0
+	sensor light2 on 2
+	light2 is light as percent
+	sensor touch1 on 1
+	touch1 is switch as boolean
+	sensor touch3 on 3
+	touch3 is switch as boolean
+	event tRelease_touch3EventRelease when touch3.released
+	
+	
+	event tPress_touch1EventPress when touch1.pressed
+	
+	
+	event lBrite_light2EventHigh when light2 > (threshold / 10)
+	
+	macro VM_READ {
+		wait until tPress_touch1EventPress
+		count = 10
+		direction [ A  ] [ ]
+		on [ A  ] 
+		repeat {
+			wait until tPress_touch1EventPress
+			count += 10
+		} until lBrite_light2EventHigh
+		off [ A  ] 
+	}
+	macro VM_DISPENSE {
+		on [ C  ] 
+		repeat (count/10) {
+			wait until tRelease_touch3EventRelease
+		}
+		off [ C  ] 
+	}
+	macro VM_EJECT {
+		direction [  ] [ A ]
+		on [ A  ] 
+		wait 100
+		while touch1 is closed {
+		}
+		off [ A  ] 
+	}
+	
+	main {
+		ext InterfaceType "kFreestyle"
+		rcx_ClearTimers
+		bbs_GlobalReset([A B C])
+		trigger tRelease_touch3EventRelease
+		trigger tPress_touch1EventPress
+		threshold = (light2*10)
+		threshold += 20
+		forever {
+			VM_READ
+			VM_DISPENSE
+			VM_EJECT
+		}
+	}
+	
+	
+	fragment ( 364,9 ) {
+		VM_DISPENSE
+	}
+	fragment ( 500,24 ) {
+		VM_EJECT
+	}
+	fragment ( 207,-10 ) {
+		VM_READ
+	}
+}

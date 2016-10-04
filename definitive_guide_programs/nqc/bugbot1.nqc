@@ -1,0 +1,73 @@
+// bugbot1.nqc - using multiple tasks
+
+// sensors
+#define LBUMP SENSOR_1
+#define RBUMP SENSOR_3
+
+// motors
+#define LEFT OUT_A
+#define RIGHT OUT_C
+
+// events
+#define LEFT_EVENT 1
+#define RIGHT_EVENT 2
+
+
+task main()
+{
+    // configure the sensor
+    SetSensor(LBUMP, SENSOR_TOUCH);
+    SetSensor(RBUMP, SENSOR_TOUCH);
+    
+    // configure the events
+    SetEvent(LEFT_EVENT, LBUMP, EVENT_TYPE_RELEASED);
+    SetEvent(RIGHT_EVENT, RBUMP, EVENT_TYPE_RELEASED);
+    
+    // start going forward
+    On(LEFT+RIGHT);
+
+    start watch_left;
+    start watch_right;
+}
+
+
+task watch_left()
+{
+    while(true)
+    {
+        monitor(EVENT_MASK(LEFT_EVENT))
+        {
+            while(true);
+        }
+        catch
+        {
+            Off(LEFT);
+            Rev(RIGHT);
+            
+            until(LBUMP==1);
+            On(LEFT);
+            Fwd(RIGHT);
+        }
+    }
+}
+
+
+task watch_right()
+{
+    while(true)
+    {
+        monitor(EVENT_MASK(RIGHT_EVENT))
+        {
+            while(true);
+        }
+        catch
+        {
+            Off(RIGHT);
+            Rev(LEFT);
+            
+            until(RBUMP==1);
+            On(RIGHT);
+            Fwd(LEFT);
+        }
+    }
+}

@@ -1,0 +1,81 @@
+// steerbot1.nqc
+//   a simple bumper car with rack & pinion steering
+
+#define CENTER   SENSOR_1
+#define EYE      SENSOR_2
+
+#define STEER    OUT_A
+#define DRIVE    OUT_C
+
+#define FULL_TURN_TIME   50
+#define STRAIGHT_TIME    50
+
+#define PROX_EVENT 1
+#define PROX_THRESHOLD 52
+
+void right()
+{
+    Fwd(STEER);
+    OnFor(STEER, FULL_TURN_TIME);
+}
+
+
+void left()
+{
+    Rev(STEER);
+    OnFor(STEER, FULL_TURN_TIME);
+}
+
+
+void center()
+{
+    Toggle(STEER);
+    On(STEER);
+    until(CENTER==1);
+    Off(STEER);
+}
+
+
+task main()
+{
+    // set up sensors and event
+    SetSensor(CENTER, SENSOR_TOUCH);
+    SetSensor(EYE, SENSOR_LIGHT);
+    SetEvent(PROX_EVENT, EYE, EVENT_TYPE_HIGH);
+    SetUpperLimit(PROX_EVENT, PROX_THRESHOLD);
+
+    // align wheels and drive forward
+    left();
+    center();
+    On(DRIVE);
+    
+    // use high power communication
+    SetTxPower(TX_POWER_HI);
+    
+    while(true)
+    {
+        monitor(EVENT_MASK(PROX_EVENT))
+        {
+            while(true)
+            {
+                SendMessage(85);
+            }
+        }
+        catch
+        {
+            // back up while turning
+            Rev(DRIVE);
+            right();        
+            Wait(STRAIGHT_TIME);
+            
+            // forward while turning other direction
+            Fwd(DRIVE);
+            left();
+            
+            // center steer
+            center();
+        }
+    }
+}
+
+

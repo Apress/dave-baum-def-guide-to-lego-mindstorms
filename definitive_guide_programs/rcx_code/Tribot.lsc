@@ -1,0 +1,34 @@
+program test {
+	
+	#include <RCX2.h>
+	#include <RCX2MLT.h>
+	#include <RCX2Sounds.h>
+	#include <RCX2Def.h>
+	sensor touch1 on 1
+	touch1 is switch as boolean
+	event tPress_touch1EventPress when touch1.pressed
+	
+	
+	
+	main {
+		ext InterfaceType "kFreestyle"
+		rcx_ClearTimers
+		bbs_GlobalReset([A B C])
+		start TouchWatcher0
+		rcx_Priority( 8)
+		trigger tPress_touch1EventPress
+		on [ A C  ] 
+	}
+	
+	
+	watcher TouchWatcher0 monitor tPress_touch1EventPress
+	{ 
+		rcx_Priority( 3 )
+		direction [  ] [ A C ]
+		wait 50
+		off [ A  ] 
+		wait 20
+		direction [ A C  ] [ ]
+		on [ A  ] 
+	} restart on event
+}

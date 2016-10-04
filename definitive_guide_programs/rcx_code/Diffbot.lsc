@@ -1,0 +1,90 @@
+program test {
+	
+	#include <RCX2.h>
+	#include <RCX2MLT.h>
+	#include <RCX2Sounds.h>
+	#include <RCX2Def.h>
+	var tooDark = 0
+	var tooBright = 0
+	sensor touch1 on 1
+	touch1 is switch as boolean
+	event tPress_touch1EventPress when touch1.pressed
+	
+	
+	event tRelease_touch1EventRelease when touch1.released
+	
+	
+	sensor touch2 on 2
+	touch2 is switch as boolean
+	event tPress_touch2EventPress when touch2.pressed
+	
+	
+	event tRelease_touch2EventRelease when touch2.released
+	
+	
+	sensor light3 on 3
+	light3 is light as percent
+	event lDark_light3EventLow when light3 < (tooDark / 10)
+	
+	event lRange_light3EventRange when light3 is (tooDark / 10)..(tooBright / 10)
+	
+	event lBrite_light3EventHigh when light3 > (tooBright / 10)
+	
+	
+	main {
+		ext InterfaceType "kFreestyle"
+		rcx_ClearTimers
+		bbs_GlobalReset([A B C])
+		start TouchWatcher0
+		start TouchWatcher1
+		start LightWatcher2
+		start LightWatcher3
+		start LightWatcher4
+		trigger tRelease_touch1EventRelease
+		rcx_Priority( 8)
+		trigger tPress_touch1EventPress
+		trigger tPress_touch2EventPress
+		trigger lDark_light3EventLow
+		trigger lRange_light3EventRange
+		trigger lBrite_light3EventHigh
+		tooDark = (light3*10)
+		tooDark -= 20
+		tooBright = (light3*10)
+		tooBright += 20
+	}
+	
+	
+	watcher TouchWatcher0 monitor tPress_touch1EventPress
+	{ 
+		rcx_Priority( 3 )
+		direction [ A  ] [ ]
+		on [ A  ] 
+		wait until tRelease_touch1EventRelease
+		off [ A  ] 
+	} restart on event
+	watcher TouchWatcher1 monitor tPress_touch2EventPress
+	{ 
+		rcx_Priority( 3 )
+		direction [  ] [ A ]
+		on [ A  ] 
+		wait until tRelease_touch2EventRelease
+		off [ A  ] 
+	} restart on event
+	watcher LightWatcher2 monitor lDark_light3EventLow
+	{
+		rcx_Priority( 4 )
+		direction [ C  ] [ ]
+		on [ C  ] 
+	} restart on event
+	watcher LightWatcher3 monitor lRange_light3EventRange
+	{
+		rcx_Priority( 4 )
+		off [ C  ] 
+	} restart on event
+	watcher LightWatcher4 monitor lBrite_light3EventHigh
+	{
+		rcx_Priority( 4 )
+		direction [  ] [ C ]
+		on [ C  ] 
+	} restart on event
+}

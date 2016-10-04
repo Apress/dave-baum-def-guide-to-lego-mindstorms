@@ -1,0 +1,23 @@
+program test {
+    #include <RCX2.h>
+    #include <RCX2MLT.h>
+    #include <RCX2Sounds.h>
+    #include <RCX2Def.h>
+    
+    
+    main {
+        rcx_ClearTimers
+        bbs_GlobalReset([A B C])
+        on [A C]
+        forever {
+            power [C] 4
+            wait 200
+            power [C] 8
+            wait 100
+            power [A] 4
+            wait 200
+            power [A] 8
+            wait 100
+        }
+    }
+}

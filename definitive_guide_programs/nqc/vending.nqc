@@ -1,0 +1,77 @@
+// vending.nqc
+//  program for the Vending Machine using card reader
+
+#define CARD_COUNT   SENSOR_1
+#define CARD_STOP    SENSOR_2
+#define CARD_GRAB    OUT_A
+
+#define CANDY_COUNT   SENSOR_3
+#define CANDY_MOTOR   OUT_C
+
+#define CARD_EVENT 1
+
+int count;
+
+task main()
+{
+    // set up sensors
+    SetSensor(CARD_STOP, SENSOR_LIGHT);
+    SetEvent(CARD_EVENT, CARD_STOP, EVENT_TYPE_HIGH);
+    SetUpperLimit(CARD_EVENT, CARD_STOP + 2);
+
+    SetSensor(CARD_COUNT, SENSOR_TOUCH);
+    SetSensor(CANDY_COUNT, SENSOR_TOUCH);
+
+    while(true)
+    {
+        readCard();
+        dispenseCandy(count);
+        ejectCard();
+    }
+}
+
+
+void readCard()
+{
+
+    // wait for card to be inserted, then grab it
+    until(CARD_COUNT == 1);
+    OnFwd(CARD_GRAB);
+    count = 1;
+    
+    monitor(EVENT_MASK(CARD_EVENT))
+    {
+        while(true)
+        {
+            until(CARD_COUNT == 0);
+            until(CARD_COUNT == 1);
+            count++;
+        }
+    }
+
+    Off(CARD_GRAB);
+}
+
+
+
+void dispenseCandy(const int &n)
+{
+    // dispense the candy
+    On(CANDY_MOTOR);
+    repeat (n)
+    {
+        until(CANDY_COUNT == 1);
+        until(CANDY_COUNT == 0);
+    }
+    Off(CANDY_MOTOR);
+}
+
+
+void ejectCard()
+{
+    // eject card
+    OnRev(CARD_GRAB);
+    Wait(100);
+    until(CARD_COUNT == 0);
+    Off(CARD_GRAB);
+}

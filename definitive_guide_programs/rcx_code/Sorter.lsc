@@ -1,0 +1,45 @@
+program test {
+	
+	#include <RCX2.h>
+	#include <RCX2MLT.h>
+	#include <RCX2Sounds.h>
+	#include <RCX2Def.h>
+	sensor light1 on 1
+	light1 is light as percent
+	sensor touch3 on 3
+	touch3 is switch as boolean
+	event tRelease_touch3EventRelease when touch3.released
+	
+	
+	macro EJECT {
+		on [ A  ] 
+		wait until tRelease_touch3EventRelease
+		reverse [ A  ] 
+		wait until tRelease_touch3EventRelease
+		off [ A  ] 
+	}
+	
+	main {
+		ext InterfaceType "kFreestyle"
+		rcx_ClearTimers
+		bbs_GlobalReset([A B C])
+		trigger tRelease_touch3EventRelease
+		while light1 > 35 {
+			if light1 > 45{
+				direction [ A  ] [ ]
+			}
+			else
+			{
+				direction [  ] [ A ]
+			} 
+			EJECT
+			wait 10
+		}
+		stop tasks
+	}
+	
+	
+	fragment ( 236,37 ) {
+		EJECT
+	}
+}

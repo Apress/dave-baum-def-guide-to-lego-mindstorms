@@ -1,0 +1,65 @@
+program test {
+	
+	#include <RCX2.h>
+	#include <RCX2MLT.h>
+	#include <RCX2Sounds.h>
+	#include <RCX2Def.h>
+	var tooDark = 0
+	var tooBright = 0
+	var delta = 0
+	sensor light2 on 2
+	light2 is light as percent
+	macro LB2_SETUP {
+		tooBright = (light2*10)
+		sound 4
+		wait 300
+		tooDark = (light2*10)
+	}
+	macro LB2_CALC {
+		delta = tooBright
+		delta -= tooDark
+		rcx_Divide(delta,30)
+		tooDark += delta
+		tooBright -= delta
+	}
+	macro LB2_FOLLOW {
+		on [ A C  ] 
+		forever {
+			if light2 < (tooDark / 10){
+				on [ C  ] 
+				off [ A  ] 
+			}
+			else
+			{
+				if light2 > (tooBright / 10){
+					on [ A  ] 
+					off [ C  ] 
+				}
+				else
+				{
+					on [ A C  ] 
+				} 
+			} 
+		}
+	}
+	
+	main {
+		ext InterfaceType "kFreestyle"
+		rcx_ClearTimers
+		bbs_GlobalReset([A B C])
+		LB2_SETUP
+		LB2_CALC
+		LB2_FOLLOW
+	}
+	
+	
+	fragment ( 166,-2 ) {
+		LB2_SETUP
+	}
+	fragment ( 494,11 ) {
+		LB2_FOLLOW
+	}
+	fragment ( 285,-2 ) {
+		LB2_CALC
+	}
+}

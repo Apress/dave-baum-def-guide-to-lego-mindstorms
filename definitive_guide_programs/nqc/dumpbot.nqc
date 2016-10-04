@@ -1,0 +1,119 @@
+// dumpbot.nqc
+//    a cargo delivery program
+
+// sensor and motors
+#define EYE     SENSOR_2
+#define LEFT    OUT_A
+#define RIGHT   OUT_C
+#define DUMPER OUT_B
+
+
+#define DUMP_TIME 70
+#define UNDUMP_TIME 100
+
+#define LINE_EVENT 1
+
+// global variables
+int lineValue;
+int stopValue;
+int sweepDir = 1;
+
+
+void setup()
+{
+    SetSensor(EYE, SENSOR_LIGHT);
+
+    lineValue = EYE;
+    stopValue = lineValue - 3;
+    lineValue += 3;
+
+    SetEvent(LINE_EVENT, EYE, EVENT_TYPE_LOW);
+    LowerLimit(LINE_EVENT) = lineValue;
+}
+
+
+void find()
+{
+    SetPower(LEFT+RIGHT, 3);
+    if (sweepDir > 0)
+    {
+        Rev(LEFT);
+    }
+    else
+    {
+        Rev(RIGHT);
+    }
+    
+    int sweepTime = 20;
+
+    monitor(EVENT_MASK(LINE_EVENT))
+    {
+        while(true)
+        {
+            Wait(sweepTime);
+    
+            sweepTime *= 2;
+            sweepDir *= -1;
+            Toggle(LEFT+RIGHT);
+        }
+    }
+
+    Fwd(LEFT+RIGHT);
+    SetPower(LEFT+RIGHT, OUT_FULL);
+    
+}
+
+
+void follow()
+{
+    On(LEFT+RIGHT);
+
+    while(EYE > stopValue)
+    {
+        if (EYE > lineValue)
+        {
+            find();
+        }
+    }
+    
+    Off(LEFT+RIGHT);
+}
+
+
+void dump()
+{
+    // dump the cargo bin
+    OnFwd(DUMPER);
+    Wait(DUMP_TIME);
+    Rev(DUMPER);
+    Wait(UNDUMP_TIME);
+    Off(DUMPER);
+}
+
+
+void turn_around()
+{
+    // start turning
+    OnRev(LEFT);
+    OnFwd(RIGHT);
+    
+    // wait until not over the line
+    until(EYE > lineValue);
+    
+    // wait until over the line again
+    until(EYE < lineValue);
+    Off(LEFT+RIGHT);
+    
+}
+
+
+task main()
+{
+    setup();
+    
+    follow();
+    dump();
+    turn_around();
+    follow();
+}
+
